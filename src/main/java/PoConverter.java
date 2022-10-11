@@ -2,8 +2,8 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.json.*;
-
+import org.json.JSONObject;
+import org.json.JSONArray;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -11,154 +11,198 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 public class PoConverter {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
-        List<JSONObject> colorSlabList = new ArrayList<>();
-        List<List> excelSlabList = new ArrayList<>(7);
-        List<JSONObject> colorAccessoryList = new ArrayList<>();
-        List<List> excelAccessoryList = new ArrayList<>(7);
-        List<String> barList = new ArrayList<>();
+        String templateExcelFile;
+        if( args.length == 1){
+            templateExcelFile = args[0] + "\\Cullman Countertop Order Form.xlsx";
+        }else{
+            templateExcelFile = "C:\\Users\\" + System.getProperty("user.name") + "\\OneDrive - Top Shop\\OneDrive - Nashville Plywood\\Template Docs\\Cullman Countertop Order Form.xlsx";
+        }
 
-        String poNum = "20446";
+        System.out.println(templateExcelFile);
+        if (!Files.exists(Path.of(templateExcelFile))) {
+            // do something
+            System.out.print("You do not have the template file installed or it . Please get with Tucker Beals to remedy this issue");
+        } else {
 
-        HttpClient client = HttpClient.newBuilder().build();
+            List<JSONObject> colorSlabList = new ArrayList<>();
+            List<List> excelSlabList = new ArrayList<>(7);
+            List<JSONObject> colorAccessoryList = new ArrayList<>();
+            List<List> excelAccessoryList = new ArrayList<>(7);
+            List<String> barList = new ArrayList<>();
 
-        String contextID = login(client);
+            Scanner userScanner = new Scanner(System.in);
+            Scanner poNumScanner = new Scanner(System.in);
 
-        JSONArray json = agilityPOLookup(client, contextID, poNum);
+            String userName = null;
+            String userPhone = null;
+            int userNum;
 
-        var holder = new JSONObject();
-        var holderCode = "";
-        for(int i = 0; i < json.length(); i++)
-        {
-            holder = json.getJSONObject(i);
-            holderCode = holder.getString("ItemCode");
-            if(holderCode.endsWith("KSL") || holderCode.endsWith("VSL") || holderCode.endsWith("DSL") || holderCode.endsWith("BSL")){
-                colorSlabList.add(holder);
-            } else if (holderCode.endsWith("RCAP") || holderCode.endsWith("LCAP") || holderCode.endsWith("KSPL") ||
-                    holderCode.endsWith("VSPL") || holderCode.endsWith("DSPL") || holderCode.endsWith("LSPL") ||
-                    holderCode.endsWith("BSPL") || holderCode.endsWith("BCAP") || holderCode.endsWith("SCAP")){
-                colorAccessoryList.add(holder);
-            } else {
-                System.out.println("Missing an assignment: " + holder);
+            String poNum;
+
+            System.out.println("Enter user number:");
+            System.out.println("1 - Sid Medlock");
+            System.out.println("2 - Tucker Beals");
+            System.out.println("3 - Noah Gilmer");
+            userNum = userScanner.nextInt();
+
+            switch (userNum){
+                case 1 -> {
+                    userName = "Sid Medlock";
+                    userPhone = "(615)310-6891";
+                }
+                case 2 -> {
+                    userName = "Tucker Beals";
+                    userPhone = "(615)681-3501";
+                }
+                case 3 -> {
+                    userName = "Noah Gilmer";
+                    userPhone = "(423)582-0803";
+                }
             }
-        }
 
-        String profile = getOrderProfile(colorSlabList.get(0).getString("ItemCode"));
+            System.out.println("Enter Agility PO Number you wish to convert:");
+            poNum = poNumScanner.nextLine();
 
-        System.out.println(profile);
+            HttpClient client = HttpClient.newBuilder().build();
 
-        for( JSONObject item: colorSlabList){
+            String contextID = login(client);
 
-            List<String> tempList = generateTempList(18);
-
-            String colorCode= item.getString("ItemCode").replaceAll("[a-zA-Z]", "").replaceAll("-", "");
-            colorCode = colorCode.substring(0,colorCode.length()-2) + "-" + colorCode.substring(colorCode.length()-2);
-            String lineItem = item.getString("ItemCode").replaceAll("^([Pp][Ff][Tt](\\S{2})\\d{4}(-)?\\d{2})", "").toUpperCase();
-            String size = item.getString("SIZE");
-
-            if(lineItem.equals("BSL") && !barList.contains(size.substring(0,2))){
-                barList.add(size.substring(0,2));
-            }
-
-            int destination = slabLineItemDestination(lineItem, size, barList);
-
-            excelSlabList = addColorIfNew(excelSlabList,colorCode,tempList);
-
-            int length = Integer.parseInt(size.replaceAll("^\\d{2}\"X", "").replaceAll("\"", "")) / 12;
-
-            excelSlabList = plugInLineItemToSpreadsheetRows(excelSlabList, destination, colorCode, item.getInt("Quantity")/length);
-        }
-
-        for( JSONObject item: colorAccessoryList){
-
-            List<String> tempList = generateTempList(18);
-
-            String colorCode= item.getString("ItemCode").replaceAll("[a-zA-Z]", "").replaceAll("-", "");
-            colorCode = colorCode.substring(0,colorCode.length()-2) + "-" + colorCode.substring(colorCode.length()-2);
-            String lineItem = item.getString("ItemCode").replaceAll("^([Pp][Ff][Tt])(\\S{2})?\\d{4}(-)?\\d{2}", "").toUpperCase();
-
-            int destination = accessoryLineItemDestination(lineItem);
-
-            excelAccessoryList = addColorIfNew(excelAccessoryList, colorCode, tempList);
-
-            excelAccessoryList = plugInLineItemToSpreadsheetRows(excelAccessoryList,destination, colorCode, item.getInt("Quantity"));
-        }
-
-//        System.out.println("excelAccessoryList");
-//        System.out.println(excelAccessoryList);
+            JSONObject response = agilityPOLookup(client, contextID, poNum);
 
 
-        FileInputStream file = new FileInputStream("C:\\Users\\tbeals\\OneDrive - Top Shop\\OneDrive - Nashville Plywood\\Template Docs\\Cullman Countertop Order Form.xlsx");
-        XSSFWorkbook workbookinput = new XSSFWorkbook(file);
+            if (response.has("dtPurchaseOrderDetail")) {
+                JSONArray json = response.getJSONArray("dtPurchaseOrderDetail");
+                var holder = new JSONObject();
+                var holderCode = "";
+                for (int i = 0; i < json.length(); i++) {
+                    holder = json.getJSONObject(i);
+                    holderCode = holder.getString("ItemCode");
+                    if (holderCode.endsWith("KSL") || holderCode.endsWith("VSL") || holderCode.endsWith("DSL") || holderCode.endsWith("BSL")) {
+                        colorSlabList.add(holder);
+                    } else if (holderCode.endsWith("RCAP") || holderCode.endsWith("LCAP") || holderCode.endsWith("KSPL") ||
+                            holderCode.endsWith("VSPL") || holderCode.endsWith("DSPL") || holderCode.endsWith("LSPL") ||
+                            holderCode.endsWith("BSPL") || holderCode.endsWith("BCAP") || holderCode.endsWith("SCAP")) {
+                        colorAccessoryList.add(holder);
+                    } else {
+                        System.out.println("Missing an assignment: " + holder);
+                    }
+                }
+
+                String profile = getOrderProfile(colorSlabList.get(0).getString("ItemCode"));
+
+                for (JSONObject item : colorSlabList) {
+
+                    List<String> tempList = generateTempList(18);
+
+                    String colorCode = item.getString("ItemCode").replaceAll("[a-zA-Z]", "").replaceAll("-", "");
+                    colorCode = colorCode.substring(0, colorCode.length() - 2) + "-" + colorCode.substring(colorCode.length() - 2);
+                    String lineItem = item.getString("ItemCode").replaceAll("^([Pp][Ff][Tt](\\S{2})\\d{4}(-)?\\d{2})", "").toUpperCase();
+                    String size = item.getString("SIZE");
+
+                    if (lineItem.equals("BSL") && !barList.contains(size.substring(0, 2))) {
+                        barList.add(size.substring(0, 2));
+                    }
+
+                    int destination = slabLineItemDestination(lineItem, size, barList);
+
+                    int length = Integer.parseInt(size.replaceAll("^\\d{2}\"X", "").replaceAll("\"", "")) / 12;
+
+                    excelSlabList = plugInLineItemToSpreadsheetRows(addColorIfNew(excelSlabList, colorCode, tempList), destination, colorCode, item.getInt("Quantity") / length);
+                }
+
+                for (JSONObject item : colorAccessoryList) {
+
+                    List<String> tempList = generateTempList(18);
+
+                    String colorCode = item.getString("ItemCode").replaceAll("[a-zA-Z]", "").replaceAll("-", "");
+                    colorCode = colorCode.substring(0, colorCode.length() - 2) + "-" + colorCode.substring(colorCode.length() - 2);
+                    String lineItem = item.getString("ItemCode").replaceAll("^([Pp][Ff][Tt])(\\S{2})?\\d{4}(-)?\\d{2}", "").toUpperCase();
+
+                    int destination = accessoryLineItemDestination(lineItem);
+
+                    excelAccessoryList = addColorIfNew(excelAccessoryList, colorCode, tempList);
+
+                    excelAccessoryList = plugInLineItemToSpreadsheetRows(excelAccessoryList, destination, colorCode, item.getInt("Quantity"));
+                }
+
+                FileInputStream file = new FileInputStream(templateExcelFile);
+                XSSFWorkbook workbookinput = new XSSFWorkbook(file);
 
 //output new excel file to which we need to copy the above sheets
 //this would copy entire workbook from source
-        XSSFWorkbook workbookoutput= workbookinput;
+                XSSFWorkbook workbookoutput = workbookinput;
 
-        Sheet sheet = workbookoutput.getSheetAt(0);
+                Sheet sheet = workbookoutput.getSheetAt(0);
+
+                SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+                Date date = new Date();
+
+                Row dateRow = sheet.getRow(3);
+                dateRow.getCell(12).setCellValue(formatter.format(date));
+
+                Row namePoRow = sheet.getRow(4);
+                namePoRow.getCell(2).setCellValue(userName);
+                namePoRow.getCell(12).setCellValue(poNum);
+
+                Row phoneRow = sheet.getRow(5);
+                phoneRow.getCell(12).setCellValue(userPhone);
+
+                Row profileRow = sheet.getRow(6);
+                profileRow.getCell(2).setCellValue(profile);
+
+                for (int q = 0; q < excelSlabList.size(); q++) {
+
+                    Row row = sheet.getRow(10 + q);
+                    Cell cell = null;
+                    for (int i = 0; i < excelSlabList.get(q).size(); i++) {
+//                System.out.println("here");
+//                System.out.println(excelSlabList.get(q).get(i));
+//                System.out.println("Q: " + q);
+//                System.out.println("I: " + i);
+                        cell = row.getCell(i + 1);
+                        cell.setCellValue(excelSlabList.get(q).get(i).toString());
+                    }
+                }
 
 
-        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
-        Date date = new Date();
+                if (barList.size() > 0) {
+                    Row barSizeRow = sheet.getRow(8);
 
-        Row dateRow = sheet.getRow(3);
-        dateRow.getCell(12).setCellValue(formatter.format(date));
-        Row poRow = sheet.getRow(4);
-        poRow.getCell(12).setCellValue(poNum);
+                    for (int x = 0; x < barList.size(); x++) {
+                        Cell barCell = barSizeRow.getCell(13 + (x * 3));
+                        barCell.setCellValue(barList.get(x));
+                    }
+                }
 
-        Row profileRow = sheet.getRow(6);
-        profileRow.getCell(2).setCellValue(profile);
+                for (int q = 0; q < excelAccessoryList.size(); q++) {
 
-        for(int q = 0; q < excelSlabList.size(); q++) {
-
-            Row row = sheet.getRow(10 + q);
-            Cell cell = null;
-            for (int i = 0; i < excelSlabList.get(q).size(); i++) {
-                System.out.println("here");
-                System.out.println(excelSlabList.get(q).get(i));
-                System.out.println("Q: " + q);
-                System.out.println("I: " + i);
-                cell = row.getCell(i + 1);
-                cell.setCellValue(excelSlabList.get(q).get(i).toString());
-            }
-        }
-
-
-        if(barList.size() > 0){
-            Row barSizeRow = sheet.getRow(8);
-
-            for(int x = 0; x < barList.size(); x++){
-                Cell barCell = barSizeRow.getCell(13 + (x * 3));
-                barCell.setCellValue(barList.get(x));
-            }
-        }
-
-        for(int q = 0; q < excelAccessoryList.size(); q++) {
-
-            Row row = sheet.getRow(22 + q);
-            Cell cell = null;
-            for (int i = 0; i < excelAccessoryList.get(q).size(); i++) {
-                cell = row.getCell(i + 1);
-                cell.setCellValue(excelAccessoryList.get(q).get(i).toString());
-            }
-        }
+                    Row row = sheet.getRow(22 + q);
+                    Cell cell = null;
+                    for (int i = 0; i < excelAccessoryList.get(q).size(); i++) {
+                        cell = row.getCell(i + 1);
+                        cell.setCellValue(excelAccessoryList.get(q).get(i).toString());
+                    }
+                }
 
 //To write your changes to new workbook
-        FileOutputStream out = new FileOutputStream("C:\\Users\\tbeals\\OneDrive - Top Shop\\OneDrive - Nashville Plywood\\Cullman PO Spreadsheets\\Cullman_NashPly_PO"+ poNum+".xlsx");
-        workbookoutput.write(out);
-        out.close();
+                FileOutputStream out = new FileOutputStream("..\\..\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
+                workbookoutput.write(out);
+                out.close();
 
-
-        logout(client,contextID);
+            } else {
+                System.out.println("This PO does not exist in agility.");
+            }
+            logout(client, contextID);
+        }
     }
 
     public static String getOrderProfile(String itemCode) {
@@ -238,7 +282,6 @@ public class PoConverter {
         switch(lineItem) {
             case "KSL" -> {
                 baseDestination = 1;
-                System.out.println(lineItem);
             }
             case "VSL" -> {
                 baseDestination = 4;
@@ -288,11 +331,12 @@ public class PoConverter {
             }
             case "BCAP", "SCAP" -> {
                 baseDestination = 9;
-                System.out.println(lineItem);
+            }
+            case "LSPL" -> {
+                baseDestination = 12;
             }
             case "BSPL" -> {
-                baseDestination = 14;
-                System.out.println(lineItem);
+                baseDestination = 15;
             }
         }
 
@@ -320,7 +364,7 @@ public class PoConverter {
         return json.getJSONObject("response").getString("SessionContextId");
     }
 
-    public static JSONArray agilityPOLookup(HttpClient client, String contextID, String PoNum) throws IOException, InterruptedException {
+    public static JSONObject agilityPOLookup(HttpClient client, String contextID, String PoNum) throws IOException, InterruptedException {
 
         JSONObject requestBody = new JSONObject();
 
@@ -330,8 +374,8 @@ public class PoConverter {
 
         return response.getJSONObject("response")
                 .getJSONObject("PurchaseOrderResponse")
-                .getJSONObject("dsPurchaseOrderResponse")
-                .getJSONArray("dtPurchaseOrderDetail");
+                .getJSONObject("dsPurchaseOrderResponse");
+
     }
 
     public static JSONObject postAgilityAPICall(HttpClient client, String contextID, JSONObject requestBody) throws IOException, InterruptedException {
