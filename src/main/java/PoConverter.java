@@ -97,11 +97,15 @@ public class PoConverter {
                     }
                 }
 
-                String profile = getOrderProfile(colorSlabList.get(0).getString("ItemCode"));
+                String profile = "";
+                if(!colorSlabList.isEmpty())
+                    profile = getOrderProfile(colorSlabList.get(0).getString("ItemCode"));
+                else if (!colorAccessoryList.isEmpty())
+                    profile = getOrderProfile(colorAccessoryList.get(0).getString("ItemCode"));
 
                 for (JSONObject item : colorSlabList) {
 
-                    List<String> tempList = generateTempList(18);
+                    List<String> tempList = generateTempList(19);
 
                     String colorCode = item.getString("ItemCode").replaceAll("[a-zA-Z]", "").replaceAll("-", "");
                     colorCode = colorCode.substring(0, colorCode.length() - 2) + "-" + colorCode.substring(colorCode.length() - 2);
@@ -143,7 +147,7 @@ public class PoConverter {
 
                 Sheet sheet = workbookoutput.getSheetAt(0);
 
-                SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+                SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy");
                 Date date = new Date();
 
                 Row dateRow = sheet.getRow(3);
@@ -206,6 +210,14 @@ public class PoConverter {
     }
 
     public static String getOrderProfile(String itemCode) {
+
+//        String itemCode;
+//        if(!slabItemCode.equals(""))
+//            itemCode = slabItemCode;
+//        else if (!accessoryItemCode.equals(""))
+//            itemCode = accessoryItemCode;
+//        else
+//            itemCode = "";
 
         switch(itemCode.substring(3,5).toUpperCase()){
             case "CT" -> {
@@ -385,7 +397,7 @@ public class PoConverter {
                 URI.create(url + "Purchasing/PurchaseOrderGet"))
                 .header("accept", "application/json")
                 .header("ContextId", contextID)
-                .header("Branch", "CABINETS")
+                .header("Branch", "FABRICATION")
                 .POST(buildRequest(requestBody))
                 .build();
 
@@ -417,7 +429,7 @@ public class PoConverter {
                 .header("accept", "application/json")
                 .header("accept", "application/json")
                 .header("ContextId", contextId)
-                .header("Branch", "CABINETS")
+                .header("Branch", "FABRICATION")
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
                 .build();
 
