@@ -34,9 +34,9 @@ public class PoConverter {
         } else {
 
             List<JSONObject> colorSlabList = new ArrayList<>();
-            List<List> excelSlabList = new ArrayList<>(7);
+            List<List<String>> excelSlabList = new ArrayList<>(7);
             List<JSONObject> colorAccessoryList = new ArrayList<>();
-            List<List> excelAccessoryList = new ArrayList<>(7);
+            List<List<String>> excelAccessoryList = new ArrayList<>(7);
             List<String> barList = new ArrayList<>();
 
             Scanner userScanner = new Scanner(System.in);
@@ -109,7 +109,7 @@ public class PoConverter {
 
                     String colorCode = item.getString("ItemCode").replaceAll("[a-zA-Z]", "").replaceAll("-", "");
                     colorCode = colorCode.substring(0, colorCode.length() - 2) + "-" + colorCode.substring(colorCode.length() - 2);
-                    String lineItem = item.getString("ItemCode").replaceAll("^([Pp][Ff][Tt](\\S{2})\\d{4}(-)?\\d{2})", "").toUpperCase();
+                    String lineItem = item.getString("ItemCode").replaceAll("^([Pp][Ff][Tt](\\S{2})\\d{3,4}(-)?\\d{2})", "").toUpperCase();
                     String size = item.getString("SIZE");
 
                     if (lineItem.equals("BSL") && !barList.contains(size.substring(0, 2))) {
@@ -129,7 +129,8 @@ public class PoConverter {
 
                     String colorCode = item.getString("ItemCode").replaceAll("[a-zA-Z]", "").replaceAll("-", "");
                     colorCode = colorCode.substring(0, colorCode.length() - 2) + "-" + colorCode.substring(colorCode.length() - 2);
-                    String lineItem = item.getString("ItemCode").replaceAll("^([Pp][Ff][Tt])(\\S{2})?\\d{4}(-)?\\d{2}", "").toUpperCase();
+                    //String lineItem = item.getString("ItemCode").replaceAll("^([Pp][Ff][Tt])(\\S{2})?\\d{4}(-)?\\d{2}", "").toUpperCase();
+                    String lineItem = item.getString("ItemCode").replaceAll("^([Pp][Ff][Tt])(\\S{2})?\\d{3,4}(-)?\\d{2}", "").toUpperCase();
 
                     int destination = accessoryLineItemDestination(lineItem);
 
@@ -199,6 +200,8 @@ public class PoConverter {
 
 //To write your changes to new workbook
                 FileOutputStream out = new FileOutputStream("..\\..\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
+                //FileOutputStream out = new FileOutputStream("C:\\Users\\tbeals\\OneDrive - Top Shop\\OneDrive - Nashville Plywood\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
+
                 workbookoutput.write(out);
                 out.close();
 
@@ -259,7 +262,7 @@ public class PoConverter {
         return tempList;
     }
 
-    private static List<List> addColorIfNew(List<List> excelList, String colorCode, List<String> tempList) {
+    private static List<List<String>> addColorIfNew(List<List<String>> excelList, String colorCode, List<String> tempList) {
         if(!checkIfColorExists(excelList, colorCode)){
             tempList.remove(0);
             tempList.add(0, colorCode);
@@ -268,19 +271,24 @@ public class PoConverter {
         return excelList;
     }
 
-    public static List<List> plugInLineItemToSpreadsheetRows(List<List> excelList, int destination, String colorCode, int quantity) {
+    public static List<List<String>> plugInLineItemToSpreadsheetRows(List<List<String>> excelList, int destination, String colorCode, int quantity) {
         //TODO Refactor with IndexOF
         for(int i = 0; i< excelList.size(); i++){
-            if (excelList.get(i).contains(colorCode)) {
-                var appendValue = String.valueOf(excelList.get(i).get(destination))+ quantity;
-                excelList.get(i).remove(destination);
-                excelList.get(i).add(destination, appendValue);
+            if (excelList.get(i).contains(colorCode) && destination != 0) {
+                //var appendValue = String.valueOf(excelList.get(i).get(destination));
+//                if(i<0) {
+//                    var holder = Integer.valueOf(excelList.get(i).get(destination)) + quantity;
+//                    //String appendValue = String.valueOf(;
+                    String appendValue = Integer.valueOf(excelList.get(i).get(destination) + quantity).toString() ;
+                    excelList.get(i).remove(destination);
+                    excelList.get(i).add(destination, appendValue);
+
             }
         }
         return excelList;
     }
 
-    public static Boolean checkIfColorExists(List<List> list, String colorCode){
+    public static Boolean checkIfColorExists(List<List<String>> list, String colorCode){
 
         return list.stream().anyMatch(list1 -> list1.contains(colorCode));
 
