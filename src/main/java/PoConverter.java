@@ -33,6 +33,7 @@ public class PoConverter {
             System.out.print("You do not have the template file installed or it . Please get with Tucker Beals to remedy this issue");
         } else {
 
+            String poType = "nonAgility";
             List<JSONObject> colorSlabList = new ArrayList<>();
             List<List<String>> excelSlabList = new ArrayList<>(7);
             List<JSONObject> colorAccessoryList = new ArrayList<>();
@@ -54,7 +55,7 @@ public class PoConverter {
             System.out.println("3 - Noah Gilmer");
             userNum = userScanner.nextInt();
 
-            switch (userNum){
+            switch (userNum) {
                 case 1 -> {
                     userName = "Sid Medlock";
                     userPhone = "(615)310-6891";
@@ -72,33 +73,44 @@ public class PoConverter {
             System.out.println("Enter Agility PO Number you wish to convert:");
             poNum = poNumScanner.nextLine();
 
-            HttpClient client = HttpClient.newBuilder().build();
+            String contextID = null;
 
-            String contextID = login(client);
+            JSONObject response = null;
 
-            JSONObject response = agilityPOLookup(client, contextID, poNum);
+            HttpClient client = null;
 
+            if (poNum.matches("\\d{5}")) {
 
-            if (response.has("dtPurchaseOrderDetail")) {
-                JSONArray json = response.getJSONArray("dtPurchaseOrderDetail");
-                var holder = new JSONObject();
-                var holderCode = "";
-                for (int i = 0; i < json.length(); i++) {
-                    holder = json.getJSONObject(i);
-                    holderCode = holder.getString("ItemCode");
-                    if (holderCode.endsWith("KSL") || holderCode.endsWith("VSL") || holderCode.endsWith("DSL") || holderCode.endsWith("BSL")) {
-                        colorSlabList.add(holder);
-                    } else if (holderCode.endsWith("RCAP") || holderCode.endsWith("LCAP") || holderCode.endsWith("KSPL") ||
-                            holderCode.endsWith("VSPL") || holderCode.endsWith("DSPL") || holderCode.endsWith("LSPL") ||
-                            holderCode.endsWith("BSPL") || holderCode.endsWith("BCAP") || holderCode.endsWith("SCAP")) {
-                        colorAccessoryList.add(holder);
-                    } else {
-                        System.out.println("Missing an assignment: " + holder);
+                poType = "Agility";
+
+                client = HttpClient.newBuilder().build();
+
+                contextID = login(client);
+
+                response = agilityPOLookup(client, contextID, poNum);
+
+                if (response.has("dtPurchaseOrderDetail") && response != null) {
+                    JSONArray json = response.getJSONArray("dtPurchaseOrderDetail");
+                    var holder = new JSONObject();
+                    var holderCode = "";
+                    for (int i = 0; i < json.length(); i++) {
+                        holder = json.getJSONObject(i);
+                        holderCode = holder.getString("ItemCode");
+                        if (holderCode.endsWith("KSL") || holderCode.endsWith("VSL") || holderCode.endsWith("DSL") || holderCode.endsWith("BSL")) {
+                            colorSlabList.add(holder);
+                        } else if (holderCode.endsWith("RCAP") || holderCode.endsWith("LCAP") || holderCode.endsWith("KSPL") ||
+                                holderCode.endsWith("VSPL") || holderCode.endsWith("DSPL") || holderCode.endsWith("LSPL") ||
+                                holderCode.endsWith("BSPL") || holderCode.endsWith("BCAP") || holderCode.endsWith("SCAP")) {
+                            colorAccessoryList.add(holder);
+                        } else {
+                            System.out.println("Missing an assignment: " + holder);
+                        }
                     }
-                }
+
+
 
                 String profile = "";
-                if(!colorSlabList.isEmpty())
+                if (!colorSlabList.isEmpty())
                     profile = getOrderProfile(colorSlabList.get(0).getString("ItemCode"));
                 else if (!colorAccessoryList.isEmpty())
                     profile = getOrderProfile(colorAccessoryList.get(0).getString("ItemCode"));
@@ -139,11 +151,82 @@ public class PoConverter {
                     excelAccessoryList = plugInLineItemToSpreadsheetRows(excelAccessoryList, destination, colorCode, item.getInt("Quantity"));
                 }
 
-                FileInputStream file = new FileInputStream(templateExcelFile);
-                XSSFWorkbook workbookinput = new XSSFWorkbook(file);
+                    FileInputStream file = new FileInputStream(templateExcelFile);
+                    XSSFWorkbook workbookinput = new XSSFWorkbook(file);
 
 //output new excel file to which we need to copy the above sheets
 //this would copy entire workbook from source
+                    XSSFWorkbook workbookoutput = workbookinput;
+
+                    Sheet sheet = workbookoutput.getSheetAt(0);
+
+                    SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy");
+                    Date date = new Date();
+
+                    Row dateRow = sheet.getRow(3);
+                    dateRow.getCell(12).setCellValue(formatter.format(date));
+
+                    Row namePoRow = sheet.getRow(4);
+                    namePoRow.getCell(2).setCellValue(userName);
+                    namePoRow.getCell(12).setCellValue(poNum);
+
+                    Row phoneRow = sheet.getRow(5);
+                    phoneRow.getCell(12).setCellValue(userPhone);
+
+                    Row profileRow = sheet.getRow(6);
+                    profileRow.getCell(2).setCellValue(profile);
+
+                    for (int q = 0; q < excelSlabList.size(); q++) {
+
+                        Row row = sheet.getRow(10 + q);
+                        Cell cell = null;
+                        for (int i = 0; i < excelSlabList.get(q).size(); i++) {
+//                System.out.println("here");
+//                System.out.println(excelSlabList.get(q).get(i));
+//                System.out.println("Q: " + q);
+//                System.out.println("I: " + i);
+                            cell = row.getCell(i + 1);
+                            cell.setCellValue(excelSlabList.get(q).get(i).toString());
+                        }
+                    }
+
+
+                    if (barList.size() > 0) {
+                        Row barSizeRow = sheet.getRow(8);
+
+                        for (int x = 0; x < barList.size(); x++) {
+                            Cell barCell = barSizeRow.getCell(13 + (x * 3));
+                            barCell.setCellValue(barList.get(x));
+                        }
+                    }
+
+                    for (int q = 0; q < excelAccessoryList.size(); q++) {
+
+                        Row row = sheet.getRow(22 + q);
+                        Cell cell = null;
+                        for (int i = 0; i < excelAccessoryList.get(q).size(); i++) {
+                            cell = row.getCell(i + 1);
+                            cell.setCellValue(excelAccessoryList.get(q).get(i).toString());
+                        }
+                    }
+
+                    //To write your changes to new workbook
+                    FileOutputStream out = new FileOutputStream("..\\..\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
+                    //FileOutputStream out = new FileOutputStream("C:\\Users\\tbeals\\OneDrive - Top Shop\\OneDrive - Nashville Plywood\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
+
+                    workbookoutput.write(out);
+                    out.close();
+
+                    System.out.println("Agility PO spreadsheet created successfully");
+            } else {
+                System.out.println("This PO does not exist in agility.");
+            }
+        }else if(poNum.matches("[A-Z]{2}\\d{6,8}")){
+                FileInputStream file = new FileInputStream(templateExcelFile);
+                XSSFWorkbook workbookinput = new XSSFWorkbook(file);
+
+                //output new excel file to which we need to copy the above sheets
+                //this would copy entire workbook from source
                 XSSFWorkbook workbookoutput = workbookinput;
 
                 Sheet sheet = workbookoutput.getSheetAt(0);
@@ -161,53 +244,20 @@ public class PoConverter {
                 Row phoneRow = sheet.getRow(5);
                 phoneRow.getCell(12).setCellValue(userPhone);
 
-                Row profileRow = sheet.getRow(6);
-                profileRow.getCell(2).setCellValue(profile);
-
-                for (int q = 0; q < excelSlabList.size(); q++) {
-
-                    Row row = sheet.getRow(10 + q);
-                    Cell cell = null;
-                    for (int i = 0; i < excelSlabList.get(q).size(); i++) {
-//                System.out.println("here");
-//                System.out.println(excelSlabList.get(q).get(i));
-//                System.out.println("Q: " + q);
-//                System.out.println("I: " + i);
-                        cell = row.getCell(i + 1);
-                        cell.setCellValue(excelSlabList.get(q).get(i).toString());
-                    }
-                }
-
-
-                if (barList.size() > 0) {
-                    Row barSizeRow = sheet.getRow(8);
-
-                    for (int x = 0; x < barList.size(); x++) {
-                        Cell barCell = barSizeRow.getCell(13 + (x * 3));
-                        barCell.setCellValue(barList.get(x));
-                    }
-                }
-
-                for (int q = 0; q < excelAccessoryList.size(); q++) {
-
-                    Row row = sheet.getRow(22 + q);
-                    Cell cell = null;
-                    for (int i = 0; i < excelAccessoryList.get(q).size(); i++) {
-                        cell = row.getCell(i + 1);
-                        cell.setCellValue(excelAccessoryList.get(q).get(i).toString());
-                    }
-                }
-
-//To write your changes to new workbook
+                //To write your changes to new workbook
                 FileOutputStream out = new FileOutputStream("..\\..\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
                 //FileOutputStream out = new FileOutputStream("C:\\Users\\tbeals\\OneDrive - Top Shop\\OneDrive - Nashville Plywood\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
 
                 workbookoutput.write(out);
                 out.close();
 
-            } else {
-                System.out.println("This PO does not exist in agility.");
+                System.out.println("Non-Agility PO spreadsheet created successfully");
+            }else{
+                System.out.println("The entered PO number does not match any allowed PO format");
+                System.out.println("Allowed formats include: ##### (i.e. 12345) or AB012345678 (i.e. TB01052023");
             }
+
+            if(contextID != null)
             logout(client, contextID);
         }
     }
