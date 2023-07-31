@@ -22,9 +22,9 @@ public class PoConverter {
 
         String templateExcelFile;
         if( args.length == 1){
-            templateExcelFile = args[0] + "\\Cullman Countertop Order Form.xlsx";
+            templateExcelFile = args[0];
         }else{
-            templateExcelFile = "C:\\Users\\" + System.getProperty("user.name") + "\\OneDrive - Top Shop\\OneDrive - Nashville Plywood\\Template Docs\\Cullman Countertop Order Form.xlsx";
+            templateExcelFile = "C:\\Users\\" + System.getProperty("user.name") + "\\Nashville Plywood\\Nashville Plywood Top Shop - Documents\\Template Docs\\Cullman Countertop Order Form - DO NOT EDIT.xlsx";
         }
 
         System.out.println(templateExcelFile);
@@ -39,6 +39,8 @@ public class PoConverter {
             List<JSONObject> colorAccessoryList = new ArrayList<>();
             List<List<String>> excelAccessoryList = new ArrayList<>(7);
             List<String> barList = new ArrayList<>();
+            List<String> bcapList = new ArrayList<>();
+            List<String> lsplList = new ArrayList<>();
 
             Scanner userScanner = new Scanner(System.in);
             Scanner poNumScanner = new Scanner(System.in);
@@ -53,6 +55,7 @@ public class PoConverter {
             System.out.println("1 - Sid Medlock");
             System.out.println("2 - Tucker Beals");
             System.out.println("3 - Noah Gilmer");
+            System.out.println("4 - Lindsae Faulkner");
             userNum = userScanner.nextInt();
 
             switch (userNum) {
@@ -67,6 +70,10 @@ public class PoConverter {
                 case 3 -> {
                     userName = "Noah Gilmer";
                     userPhone = "(423)582-0803";
+                }
+                case 4 -> {
+                    userName = "Lindsae Faulkner";
+                    userPhone = "(615)433-3332";
                 }
             }
 
@@ -100,7 +107,7 @@ public class PoConverter {
                             colorSlabList.add(holder);
                         } else if (holderCode.endsWith("RCAP") || holderCode.endsWith("LCAP") || holderCode.endsWith("KSPL") ||
                                 holderCode.endsWith("VSPL") || holderCode.endsWith("DSPL") || holderCode.endsWith("LSPL") ||
-                                holderCode.endsWith("BSPL") || holderCode.endsWith("BCAP") || holderCode.endsWith("SCAP")) {
+                                holderCode.endsWith("BSPL") || holderCode.endsWith("BCAP") || holderCode.endsWith("SCAP") || holderCode.startsWith("CAULK")) {
                             colorAccessoryList.add(holder);
                         } else {
                             System.out.println("Missing an assignment: " + holder);
@@ -117,38 +124,56 @@ public class PoConverter {
 
                 for (JSONObject item : colorSlabList) {
 
-                    List<String> tempList = generateTempList(19);
+                    List<String> tempList = generateTempList(26);
 
                     String colorCode = item.getString("ItemCode").replaceAll("[a-zA-Z]", "").replaceAll("-", "");
                     colorCode = colorCode.substring(0, colorCode.length() - 2) + "-" + colorCode.substring(colorCode.length() - 2);
                     String lineItem = item.getString("ItemCode").replaceAll("^([Pp][Ff][Tt](\\S{2})\\d{3,4}(-)?\\d{2})", "").toUpperCase();
                     String size = item.getString("SIZE");
 
-                    if (lineItem.equals("BSL") && !barList.contains(size.substring(0, 2))) {
-                        barList.add(size.substring(0, 2));
+                    if (lineItem.equals("BSL") && !barList.contains(size.split("X")[0])) {
+                        barList.add(size.split("X")[0]);
                     }
 
                     int destination = slabLineItemDestination(lineItem, size, barList);
 
-                    int length = Integer.parseInt(size.replaceAll("^\\d{2}\"X", "").replaceAll("\"", "")) / 12;
+                    int length = Integer.parseInt(size.replaceAll("^\\d{1,2}(-\\d\\/\\d{1,2})*\"X", "").replaceAll("\"", "")) / 12;
 
                     excelSlabList = plugInLineItemToSpreadsheetRows(addColorIfNew(excelSlabList, colorCode, tempList), destination, colorCode, item.getInt("Quantity") / length);
                 }
 
                 for (JSONObject item : colorAccessoryList) {
 
-                    List<String> tempList = generateTempList(18);
+                    List<String> tempList = generateTempList(22);
 
                     String colorCode = item.getString("ItemCode").replaceAll("[a-zA-Z]", "").replaceAll("-", "");
-                    colorCode = colorCode.substring(0, colorCode.length() - 2) + "-" + colorCode.substring(colorCode.length() - 2);
-                    //String lineItem = item.getString("ItemCode").replaceAll("^([Pp][Ff][Tt])(\\S{2})?\\d{4}(-)?\\d{2}", "").toUpperCase();
-                    String lineItem = item.getString("ItemCode").replaceAll("^([Pp][Ff][Tt])(\\S{2})?\\d{3,4}(-)?\\d{2}", "").toUpperCase();
+                    String lineItem = item.getString("ItemCode");
+                    String size = item.getString("SIZE").toUpperCase(Locale.ROOT);
 
-                    int destination = accessoryLineItemDestination(lineItem);
+                    if(item.getString("ItemCode").contains("CAULK")){
+                        lineItem = lineItem.replaceAll("\\d", "");
+                    }else {
+                        colorCode = colorCode.substring(0, colorCode.length() - 2) + "-" + colorCode.substring(colorCode.length() - 2);
+                        lineItem = lineItem.replaceAll("^([Pp][Ff][Tt])(\\S{2})?\\d{3,4}(-)?\\d{2}", "").toUpperCase();
+                    }
+                    //String lineItem = item.getString("ItemCode").replaceAll("^([Pp][Ff][Tt])(\\S{2})?\\d{4}(-)?\\d{2}", "").toUpperCase();
+
+
+                    int destination = accessoryLineItemDestination(lineItem, size);
 
                     excelAccessoryList = addColorIfNew(excelAccessoryList, colorCode, tempList);
 
-                    excelAccessoryList = plugInLineItemToSpreadsheetRows(excelAccessoryList, destination, colorCode, item.getInt("Quantity"));
+
+
+                    if((lineItem.equals("LSPL") || lineItem.equals("BCAP") ) || lineItem.equals("SCAP")) {
+                        int length = Integer.parseInt(size.replaceAll(" ", "").replaceAll("\"", "").split("X")[1]) / 12;
+                        System.out.println(length);
+                        excelAccessoryList = plugInLineItemToSpreadsheetRows(excelAccessoryList, destination, colorCode, item.getInt("Quantity") / length);
+                    } else{
+                        excelAccessoryList = plugInLineItemToSpreadsheetRows(excelAccessoryList, destination, colorCode, item.getInt("Quantity"));
+                    }
+
+
                 }
 
                     FileInputStream file = new FileInputStream(templateExcelFile);
@@ -210,12 +235,21 @@ public class PoConverter {
                         }
                     }
 
-                    //To write your changes to new workbook
-                    FileOutputStream out = new FileOutputStream("..\\..\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
-                    //FileOutputStream out = new FileOutputStream("C:\\Users\\tbeals\\OneDrive - Top Shop\\OneDrive - Nashville Plywood\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
 
+                    FileOutputStream out;
+                    if( args.length == 1){
+                        out = new FileOutputStream("..\\..\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
+                    }else{
+                        out = new FileOutputStream("C:\\Users\\tbeals\\Nashville Plywood\\Nashville Plywood Top Shop - Documents\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
+                    }
                     workbookoutput.write(out);
                     out.close();
+
+                    //To write your changes to new workbook
+                    //
+
+
+
 
                     System.out.println("Agility PO spreadsheet created successfully");
             } else {
@@ -245,8 +279,8 @@ public class PoConverter {
                 phoneRow.getCell(12).setCellValue(userPhone);
 
                 //To write your changes to new workbook
-                FileOutputStream out = new FileOutputStream("..\\..\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
-                //FileOutputStream out = new FileOutputStream("C:\\Users\\tbeals\\OneDrive - Top Shop\\OneDrive - Nashville Plywood\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
+                //FileOutputStream out = new FileOutputStream("..\\..\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
+                FileOutputStream out = new FileOutputStream("C:\\Users\\tbeals\\Nashville Plywood\\Nashville Plywood Top Shop - Documents\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
 
                 workbookoutput.write(out);
                 out.close();
@@ -360,11 +394,11 @@ public class PoConverter {
                 baseDestination = 7;
             }
             case "BSL" -> {
-                baseDestination = 10 + (3 * (barList.indexOf(size.substring(0,2))));
+                baseDestination = 10 + (3 * (barList.indexOf(size.split("X")[0])));
             }
         }
 
-            switch(size.replaceFirst("\\d{2}\"X", "").replaceAll("\"","")){
+            switch(size.split("X")[1].replaceAll("\"","")){
                 case "96" ->{
                 }
                 case "120" ->{
@@ -378,7 +412,7 @@ public class PoConverter {
         return baseDestination;
     }
 
-    public static int accessoryLineItemDestination(String lineItem){
+    public static int accessoryLineItemDestination(String lineItem, String size){
 
         lineItem.toUpperCase(Locale.ROOT);
         int baseDestination = 0;
@@ -404,9 +438,32 @@ public class PoConverter {
             }
             case "LSPL" -> {
                 baseDestination = 12;
+                switch(size.split("X")[1].replaceAll("\"","")){
+                    case "96" ->{
+                    }
+                    case "120" ->{
+                        baseDestination += 1;
+                    }
+                    case "144" ->{
+                        baseDestination += 2;
+                    }
+                }
             }
             case "BSPL" -> {
                 baseDestination = 15;
+                switch(size.split("X")[1].replaceAll("\"","")){
+                    case "96" ->{
+                    }
+                    case "120" ->{
+                        baseDestination += 1;
+                    }
+                    case "144" ->{
+                        baseDestination += 2;
+                    }
+                }
+            }
+            case "CAULK" -> {
+                baseDestination = 18;
             }
         }
 
