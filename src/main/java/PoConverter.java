@@ -331,6 +331,9 @@ public class PoConverter {
             case "VN", "VS" -> {
                 return "VENUS";
             }
+            case "GL", "GR" -> {
+                return "GLACIER";
+            }
             default -> {
                 return "";
             }
