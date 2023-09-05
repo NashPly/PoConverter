@@ -305,37 +305,41 @@ public class PoConverter {
 //            itemCode = accessoryItemCode;
 //        else
 //            itemCode = "";
+        if(itemCode.substring(3,6).toUpperCase().equals("4SA")){
+            return "4\" SATURN";
+        }else {
+            switch (itemCode.substring(3, 5).toUpperCase()) {
+                case "CT" -> {
+                    return "CONTOUR";
+                }
+                case "OL" -> {
+                    return "OLYMPIC";
+                }
+                case "CN" -> {
+                    return "CONTINENTAL";
+                }
+                case "SO", "SL" -> {
+                    return "SOLIDO";
+                }
+                case "SN" -> {
+                    return "SATURN";
+                }
 
-        switch(itemCode.substring(3,5).toUpperCase()){
-            case "CT" -> {
-                return "CONTOUR";
-            }
-            case "OL" -> {
-                return "OLYMPIC";
-            }
-            case "CN" -> {
-                return "CONTINENTAL";
-            }
-            case "SO", "SL" -> {
-                return "SOLIDO";
-            }
-            case "SN" -> {
-                return "SATURN";
-            }
-            case "KS" -> {
-                return "KEYSTONE";
-            }
-            case "BV", "BL" -> {
-                return "BEVEL";
-            }
-            case "VN", "VS" -> {
-                return "VENUS";
-            }
-            case "GL", "GR" -> {
-                return "GLACIER";
-            }
-            default -> {
-                return "";
+                case "KS" -> {
+                    return "KEYSTONE";
+                }
+                case "BV", "BL" -> {
+                    return "BEVEL";
+                }
+                case "VN", "VS" -> {
+                    return "VENUS";
+                }
+                case "GL", "GR" -> {
+                    return "GLACIER";
+                }
+                default -> {
+                    return "";
+                }
             }
         }
     }
