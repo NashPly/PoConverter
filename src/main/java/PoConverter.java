@@ -279,8 +279,8 @@ public class PoConverter {
                 phoneRow.getCell(12).setCellValue(userPhone);
 
                 //To write your changes to new workbook
-                //FileOutputStream out = new FileOutputStream("..\\..\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
-                FileOutputStream out = new FileOutputStream("C:\\Users\\tbeals\\Nashville Plywood\\Nashville Plywood Top Shop - Documents\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
+                FileOutputStream out = new FileOutputStream("..\\..\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
+                //FileOutputStream out = new FileOutputStream("C:\\Users\\tbeals\\Nashville Plywood\\Nashville Plywood Top Shop - Documents\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
 
                 workbookoutput.write(out);
                 out.close();
