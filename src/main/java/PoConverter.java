@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class PoConverter {
 
@@ -96,6 +97,8 @@ public class PoConverter {
 
                 response = agilityPOLookup(client, contextID, poNum);
 
+                createTrelloPOCard(client, poNum);
+
                 if (response.has("dtPurchaseOrderDetail") && response != null) {
                     JSONArray json = response.getJSONArray("dtPurchaseOrderDetail");
                     var holder = new JSONObject();
@@ -126,9 +129,9 @@ public class PoConverter {
 
                     List<String> tempList = generateTempList(26);
 
-                    String colorCode = item.getString("ItemCode").replaceAll("[a-zA-Z]", "").replaceAll("-", "");
+                    String colorCode = item.getString("ItemCode").replaceAll("(([Pp][Ff][Tt]4?[A-z]{2})|([Pp][Ff][Tt]))", "").replaceAll("[a-zA-Z]", "").replaceAll("-", "");
                     colorCode = colorCode.substring(0, colorCode.length() - 2) + "-" + colorCode.substring(colorCode.length() - 2);
-                    String lineItem = item.getString("ItemCode").replaceAll("^([Pp][Ff][Tt](\\S{2})\\d{3,4}(-)?\\d{2})", "").toUpperCase();
+                    String lineItem = item.getString("ItemCode").replaceAll("^(([Pp][Ff][Tt]4?[A-z]{2})|([Pp][Ff][Tt]))\\d{3,4}(-)?\\d{2}", "").toUpperCase();
                     String size = item.getString("SIZE");
 
                     if (lineItem.equals("BSL") && !barList.contains(size.split("X")[0])) {
@@ -146,7 +149,7 @@ public class PoConverter {
 
                     List<String> tempList = generateTempList(22);
 
-                    String colorCode = item.getString("ItemCode").replaceAll("[a-zA-Z]", "").replaceAll("-", "");
+                    String colorCode = item.getString("ItemCode").replaceAll("(([Pp][Ff][Tt]4?[A-z]{2})|([Pp][Ff][Tt]))", "").replaceAll("[a-zA-Z]", "").replaceAll("-", "");
                     String lineItem = item.getString("ItemCode");
                     String size = item.getString("SIZE").toUpperCase(Locale.ROOT);
 
@@ -154,7 +157,7 @@ public class PoConverter {
                         lineItem = lineItem.replaceAll("\\d", "");
                     }else {
                         colorCode = colorCode.substring(0, colorCode.length() - 2) + "-" + colorCode.substring(colorCode.length() - 2);
-                        lineItem = lineItem.replaceAll("^([Pp][Ff][Tt])(\\S{2})?\\d{3,4}(-)?\\d{2}", "").toUpperCase();
+                        lineItem = lineItem.replaceAll("^(([Pp][Ff][Tt]4?[A-z]{2})|([Pp][Ff][Tt]))\\d{3,4}(-)?\\d{2}", "").toUpperCase();
                     }
                     //String lineItem = item.getString("ItemCode").replaceAll("^([Pp][Ff][Tt])(\\S{2})?\\d{4}(-)?\\d{2}", "").toUpperCase();
 
@@ -258,6 +261,9 @@ public class PoConverter {
         }else if(poNum.matches("[A-Z]{2}\\d{6,8}")){
                 FileInputStream file = new FileInputStream(templateExcelFile);
                 XSSFWorkbook workbookinput = new XSSFWorkbook(file);
+
+                createTrelloPOCard(client, poNum);
+
 
                 //output new excel file to which we need to copy the above sheets
                 //this would copy entire workbook from source
@@ -556,5 +562,69 @@ public class PoConverter {
                 .build();
 
         client.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
+    public static void createTrelloPOCard(HttpClient client, String poNum) {
+
+        String queryParameters = agilityDataForTrelloGather(poNum);
+
+        System.out.println("\n-- Created Card --");
+        TrelloCalls trelloAPICall = new TrelloCalls(client, "cards", queryParameters);
+        JSONObject response = trelloAPICall.postTrelloAPICall();
+
+        updateCustomFieldTrello(client, response.getString("id"), "6197b57d371dc08c1f2a469a", "ENTER COLOR CODE");
+        updateCustomFieldTrello(client, response.getString("id"), "6197b500bbb79658801189ce", "ENTER RECEIPT DATE");
+    }
+
+    public static String agilityDataForTrelloGather(String poNum){
+
+        String boardID = "60c26dfb44555566d32ae643";
+        String idList = "6259bb7ee9fc5f8d3659ca5e";
+        String name = urlify("Cullman PO# " + poNum);
+
+        TimeHandler timeHandler = new TimeHandler();
+        String orderDate = timeHandler.getTodayTrello();
+
+        System.out.println("\n-- Created PO Card --");
+
+        //When I make the logic to determine estimated delivery date
+//        String queryParameters = String.format(
+//                "idBoard=%s&idList=%s&name=%s" +
+//                        "&idLabels=%s&start=%s&due=%s",
+//                boardID, idList, name, idLabels, orderDate, dueDate);
+
+        String queryParameters = String.format(
+                "idBoard=%s&idList=%s&name=%s" +
+                        "&start=%s",
+                boardID, idList, name, orderDate);
+        return queryParameters;
+    }
+
+    //Clean for URL
+    private static String urlify(String string){
+
+        string = string.replace(" ", "%20");
+        string = string.replace("&", "%26");
+        string = string.replace(",", "%2C");
+        string = string.replace("#", "%23");
+        string = string.replace("@", "%40");
+        string = string.replace("*", "%2A");
+        string = string.replace("'", "%27");
+        string = string.replace("\"", "%22");
+
+        return string;
+    }
+
+    public static void updateCustomFieldTrello(HttpClient client, String cardId, String customFieldID, String value) {
+        String urlEndpoint = String.format("cards/%s/customField/%s/item", cardId, customFieldID );
+        JSONObject jsonObject = new JSONObject();
+
+        if(value.equals("true") || value.equals("false"))
+            jsonObject.put("checked", value);
+        else jsonObject.put("text", value);
+
+        System.out.println("\n-- Update Custom Field in Trello --");
+        TrelloCalls trelloCalls = new TrelloCalls(client, urlEndpoint, "");
+        trelloCalls.putTrelloAPICall(jsonObject);
     }
 }
