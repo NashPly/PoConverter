@@ -262,6 +262,8 @@ public class PoConverter {
                 FileInputStream file = new FileInputStream(templateExcelFile);
                 XSSFWorkbook workbookinput = new XSSFWorkbook(file);
 
+                client = HttpClient.newBuilder().build();
+
                 createTrelloPOCard(client, poNum);
 
 
@@ -285,9 +287,12 @@ public class PoConverter {
                 phoneRow.getCell(12).setCellValue(userPhone);
 
                 //To write your changes to new workbook
-                FileOutputStream out = new FileOutputStream("..\\..\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
-                //FileOutputStream out = new FileOutputStream("C:\\Users\\tbeals\\Nashville Plywood\\Nashville Plywood Top Shop - Documents\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
-
+                FileOutputStream out;
+                if( args.length == 1){
+                    out = new FileOutputStream("..\\..\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
+                }else{
+                    out = new FileOutputStream("C:\\Users\\tbeals\\Nashville Plywood\\Nashville Plywood Top Shop - Documents\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
+                }
                 workbookoutput.write(out);
                 out.close();
 
@@ -312,7 +317,7 @@ public class PoConverter {
 //        else
 //            itemCode = "";
         if(itemCode.substring(3,6).toUpperCase().equals("4SA")){
-            return "4\" SATURN";
+            return "4\" SATURN SLABS AND ACCESS.";
         }else {
             switch (itemCode.substring(3, 5).toUpperCase()) {
                 case "CT" -> {
@@ -572,8 +577,8 @@ public class PoConverter {
         TrelloCalls trelloAPICall = new TrelloCalls(client, "cards", queryParameters);
         JSONObject response = trelloAPICall.postTrelloAPICall();
 
-        updateCustomFieldTrello(client, response.getString("id"), "6197b57d371dc08c1f2a469a", "ENTER COLOR CODE");
-        updateCustomFieldTrello(client, response.getString("id"), "6197b500bbb79658801189ce", "ENTER RECEIPT DATE");
+        updateCustomFieldTrello(client, response.getString("id"), "6197b500bbb79658801189ce", "ENTER COLOR CODE");
+        updateCustomFieldTrello(client, response.getString("id"), "6197b57d371dc08c1f2a469a", "ENTER RECEIPT DATE");
     }
 
     public static String agilityDataForTrelloGather(String poNum){
@@ -582,8 +587,8 @@ public class PoConverter {
         String idList = "6259bb7ee9fc5f8d3659ca5e";
         String name = urlify("Cullman PO# " + poNum);
 
-        TimeHandler timeHandler = new TimeHandler();
-        String orderDate = timeHandler.getTodayTrello();
+//        TimeHandler timeHandler = new TimeHandler();
+//        String orderDate = timeHandler.getTodayTrello();
 
         System.out.println("\n-- Created PO Card --");
 
@@ -593,10 +598,14 @@ public class PoConverter {
 //                        "&idLabels=%s&start=%s&due=%s",
 //                boardID, idList, name, idLabels, orderDate, dueDate);
 
+//        String queryParameters = String.format(
+//                "idBoard=%s&idList=%s&name=%s" +
+//                        "&start=%s",
+//                boardID, idList, name, orderDate);
         String queryParameters = String.format(
-                "idBoard=%s&idList=%s&name=%s" +
-                        "&start=%s",
-                boardID, idList, name, orderDate);
+                "idBoard=%s&idList=%s&name=%s",
+                boardID, idList, name);
+
         return queryParameters;
     }
 
