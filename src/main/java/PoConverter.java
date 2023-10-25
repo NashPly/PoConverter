@@ -1,12 +1,14 @@
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xwpf.usermodel.Document;
 import org.json.JSONObject;
 import org.json.JSONArray;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+
+import java.io.*;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -16,6 +18,7 @@ import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import com.beastwall.storagemanager.FileSaver;
 
 public class PoConverter {
 
@@ -96,8 +99,6 @@ public class PoConverter {
                 contextID = login(client);
 
                 response = agilityPOLookup(client, contextID, poNum);
-
-                createTrelloPOCard(client, poNum);
 
                 if (response.has("dtPurchaseOrderDetail") && response != null) {
                     JSONArray json = response.getJSONArray("dtPurchaseOrderDetail");
@@ -251,10 +252,14 @@ public class PoConverter {
                     //To write your changes to new workbook
                     //
 
-
-
-
                     System.out.println("Agility PO spreadsheet created successfully");
+
+                    createTrelloPOCard(client, poNum);
+
+                    pauseForReview();
+
+                    convertToPDF(templateExcelFile, poNum, args);
+
             } else {
                 System.out.println("This PO does not exist in agility.");
             }
@@ -263,9 +268,6 @@ public class PoConverter {
                 XSSFWorkbook workbookinput = new XSSFWorkbook(file);
 
                 client = HttpClient.newBuilder().build();
-
-                createTrelloPOCard(client, poNum);
-
 
                 //output new excel file to which we need to copy the above sheets
                 //this would copy entire workbook from source
@@ -297,6 +299,13 @@ public class PoConverter {
                 out.close();
 
                 System.out.println("Non-Agility PO spreadsheet created successfully");
+
+                createTrelloPOCard(client, poNum);
+
+                pauseForReview();
+
+                convertToPDF(templateExcelFile, poNum, args);
+
             }else{
                 System.out.println("The entered PO number does not match any allowed PO format");
                 System.out.println("Allowed formats include: ##### (i.e. 12345) or AB012345678 (i.e. TB01052023");
@@ -636,4 +645,80 @@ public class PoConverter {
         TrelloCalls trelloCalls = new TrelloCalls(client, urlEndpoint, "");
         trelloCalls.putTrelloAPICall(jsonObject);
     }
+
+    private static void pauseForReview() {
+        System.out.println("\nOpen created document to check for errors. Once checked and saved, please select this window and hit enter.");
+        Scanner scanner = new Scanner(System.in);
+
+        String input = scanner.nextLine();
+
+        System.out.println("Success");
+    }
+
+//    private static void convertToPDF(String templateExcelFile) {
+//        FileInputStream input_document = new FileInputStream(templateExcelFile;);
+//        // Read workbook into HSSFWorkbook
+//        HSSFWorkbook my_xls_workbook = new HSSFWorkbook(input_document);
+//        // Read worksheet into HSSFSheet
+//        HSSFSheet my_worksheet = my_xls_workbook.getSheetAt(0);
+//        // To iterate over the rows
+//        Iterator<Row> rowIterator = my_worksheet.iterator();
+//        //We will create output PDF document objects at this point
+//        Document iText_xls_2_pdf = new Document();
+//        try {
+//            PdfWriter.getInstance(iText_xls_2_pdf, new FileOutputStream("Excel2PDF_Output.pdf"));
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//        iText_xls_2_pdf.open();
+//        //we have two columns in the Excel sheet, so we create a PDF table with two columns
+//        //Note: There are ways to make this dynamic in nature, if you want to.
+//        PdfPTable my_table = new PdfPTable(2);
+//        //We will use the object below to dynamically add new data to the table
+//        PdfPCell table_cell;
+//        //Loop through rows.
+//        while(rowIterator.hasNext()) {
+//            Row row = rowIterator.next();
+//            Iterator<Cell> cellIterator = row.cellIterator();
+//            while(cellIterator.hasNext()) {
+//                Cell cell = cellIterator.next(); //Fetch CELL
+//                switch(cell.getCellType()) { //Identify CELL type
+//                    //you need to add more code here based on
+//                    //your requirement / transformations
+//                    case Cell.CELL_TYPE_STRING:
+//                        //Push the data from Excel to PDF Cell
+//                        table_cell=new PdfPCell(new Phrase(cell.getStringCellValue()));
+//                        //feel free to move the code below to suit to your needs
+//                        my_table.addCell(table_cell);
+//                        break;
+//                }
+//                //next line
+//            }
+//
+//        }
+//        //Finally add the table to PDF document
+//        iText_xls_2_pdf.add(my_table);
+//        iText_xls_2_pdf.close();
+//        //we created our pdf file..
+//        input_document.close(); //close xls
+//    }
+
+    private static void convertToPDF(String templateExcelFile, String poNum, String[] args) {
+
+        String path = FileSaver
+                .get()
+                .save(new File(templateExcelFile),"C:\\Users\\tbeals\\Nashville Plywood\\Nashville Plywood Top Shop - Documents\\Cullman PO's\\","Cullman_NashPly_PO123456456.pdf");
+
+//        if( args.length == 1){
+//            String path = FileSaver
+//                    .get()
+//                    .save(new File(templateExcelFile),"..\\..\\Cullman PO's\\", "Cullman_NashPly_PO" + poNum + ".pdf");
+//        }else{
+//            String path = FileSaver
+//                    .get()
+//                    .save(new File(templateExcelFile),"C:\\Users\\tbeals\\Nashville Plywood\\Nashville Plywood Top Shop - Documents\\Cullman PO's\\","Cullman_NashPly_PO" + poNum + ".pdf");
+//            }
+    }
+
 }
+
