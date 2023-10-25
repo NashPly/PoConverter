@@ -169,10 +169,14 @@ public class PoConverter {
 
 
 
-                    if((lineItem.equals("LSPL") || lineItem.equals("BCAP") ) || lineItem.equals("SCAP")) {
+                    if(((lineItem.equals("LSPL") || lineItem.equals("BCAP") ) || lineItem.equals("SCAP")) && !size.equals("")) {
                         int length = Integer.parseInt(size.replaceAll(" ", "").replaceAll("\"", "").split("X")[1]) / 12;
                         System.out.println(length);
-                        excelAccessoryList = plugInLineItemToSpreadsheetRows(excelAccessoryList, destination, colorCode, item.getInt("Quantity") / length);
+                        if(item.getInt("Quantity")>=length) {
+                            excelAccessoryList = plugInLineItemToSpreadsheetRows(excelAccessoryList, destination, colorCode, item.getInt("Quantity") / length);
+                        }else {
+                            excelAccessoryList = plugInLineItemToSpreadsheetRows(excelAccessoryList, destination, colorCode, item.getInt("Quantity"));
+                        }
                     } else{
                         excelAccessoryList = plugInLineItemToSpreadsheetRows(excelAccessoryList, destination, colorCode, item.getInt("Quantity"));
                     }
@@ -341,10 +345,9 @@ public class PoConverter {
                 case "SO", "SL" -> {
                     return "SOLIDO";
                 }
-                case "SN" -> {
+                case "SN", "SA" -> {
                     return "SATURN";
                 }
-
                 case "KS" -> {
                     return "KEYSTONE";
                 }
