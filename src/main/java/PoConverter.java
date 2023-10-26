@@ -599,8 +599,8 @@ public class PoConverter {
         String idList = "6259bb7ee9fc5f8d3659ca5e";
         String name = urlify("Cullman PO# " + poNum);
 
-//        TimeHandler timeHandler = new TimeHandler();
-//        String orderDate = timeHandler.getTodayTrello();
+        TimeHandler timeHandler = new TimeHandler();
+        String orderDate = timeHandler.getTodayTrello();
 
         System.out.println("\n-- Created PO Card --");
 
@@ -610,13 +610,10 @@ public class PoConverter {
 //                        "&idLabels=%s&start=%s&due=%s",
 //                boardID, idList, name, idLabels, orderDate, dueDate);
 
-//        String queryParameters = String.format(
-//                "idBoard=%s&idList=%s&name=%s" +
-//                        "&start=%s",
-//                boardID, idList, name, orderDate);
         String queryParameters = String.format(
-                "idBoard=%s&idList=%s&name=%s",
-                boardID, idList, name);
+                "idBoard=%s&idList=%s&name=%s" +
+                        "&start=%s",
+                boardID, idList, name, orderDate);
 
         return queryParameters;
     }
