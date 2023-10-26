@@ -53,6 +53,7 @@ public class PoConverter {
             int userNum;
             String poNum;
             String receiptDate = "";
+            String orderDestination = "";
 
             System.out.println("Enter user number:");
             System.out.println("1 - Sid Medlock");
@@ -94,9 +95,13 @@ public class PoConverter {
             switch(deliveryDate){
                 case 1:{
                     receiptDate = timeHandler.getNextTuesday().plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                    orderDestination = "Portland";
+                    break;
                 }
                 case 2:{
                     receiptDate = timeHandler.getNextFriday().plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                    orderDestination = "Gallatin";
+                    break;
                 }
             }
 
@@ -216,6 +221,7 @@ public class PoConverter {
 
                     Row dateRow = sheet.getRow(3);
                     dateRow.getCell(12).setCellValue(formatter.format(date));
+                    dateRow.getCell(18).setCellValue(orderDestination);
 
                     Row namePoRow = sheet.getRow(4);
                     namePoRow.getCell(2).setCellValue(userName);
@@ -594,8 +600,8 @@ public class PoConverter {
         TrelloCalls trelloAPICall = new TrelloCalls(client, "cards", queryParameters);
         JSONObject response = trelloAPICall.postTrelloAPICall();
 
-        updateCustomFieldTrello(client, response.getString("id"), "6197b57d371dc08c1f2a469a", "ENTER COLOR CODE");
-        updateCustomFieldTrello(client, response.getString("id"), "6197b500bbb79658801189ce", "ENTER RECEIPT DATE");
+        updateCustomFieldTrello(client, response.getString("id"), "6197b500bbb79658801189ce", "ENTER COLOR CODE");
+        updateCustomFieldTrello(client, response.getString("id"), "6197b57d371dc08c1f2a469a", "ENTER RECEIPT DATE");
     }
 
     public static String agilityDataForTrelloGather(String poNum, String receiptDate){
