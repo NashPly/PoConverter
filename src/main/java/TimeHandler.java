@@ -1,6 +1,3 @@
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
@@ -8,7 +5,6 @@ public class TimeHandler {
 
     private int searchSplit = 5; //Mins
 
-    private DateTime dt;
     private String currentYear;
     private String currentMonth;
     private String currentDayOfMonth;
@@ -16,14 +12,10 @@ public class TimeHandler {
 
     public TimeHandler(){
 
-        DateTime dtus = new DateTime();
-        DateTimeZone dtZone = DateTimeZone.forID("America/Chicago");
-        this.dt = dtus.withZone(dtZone);
-
         LocalDate localDate = LocalDate.now();
         DateTimeFormatter myFormatCurrentYear = DateTimeFormatter.ofPattern("yyyy");
         DateTimeFormatter myFormatCurrentDayOfMonth = DateTimeFormatter.ofPattern("dd");
-        DateTimeFormatter myFormatCurrentMonth = DateTimeFormatter.ofPattern("yyyy-dd-MM");
+        DateTimeFormatter myFormatCurrentMonth = DateTimeFormatter.ofPattern("MM");
 
         this.currentYear = localDate.format(myFormatCurrentYear);
         this.currentMonth = localDate.format(myFormatCurrentMonth);
