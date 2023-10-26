@@ -14,6 +14,7 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -45,12 +46,13 @@ public class PoConverter {
 
             Scanner userScanner = new Scanner(System.in);
             Scanner poNumScanner = new Scanner(System.in);
+            Scanner receiptDateScanner = new Scanner(System.in);
 
             String userName = null;
             String userPhone = null;
             int userNum;
-
             String poNum;
+            String receiptDate = "";
 
             System.out.println("Enter user number:");
             System.out.println("1 - Sid Medlock");
@@ -78,8 +80,25 @@ public class PoConverter {
                 }
             }
 
-            System.out.println("Enter Agility PO Number you wish to convert:");
+            System.out.println("\nEnter Agility PO Number you wish to convert:");
             poNum = poNumScanner.nextLine();
+
+            TimeHandler timeHandler = new TimeHandler();
+            System.out.println("\nWhen will this order be received?");
+            System.out.println("1 - Next Tuesday " + timeHandler.getNextTuesday().format(DateTimeFormatter.ofPattern("MM/dd"))+".");
+            System.out.println("2 - Next Friday " + timeHandler.getNextFriday().format(DateTimeFormatter.ofPattern("MM/dd"))+".");
+            System.out.println("3 - Other");
+            //System.out.println("Other - Please enter the expected date in the format 'MM/dd'.");
+            int deliveryDate = receiptDateScanner.nextInt();
+
+            switch(deliveryDate){
+                case 1:{
+                    receiptDate = timeHandler.getNextTuesday().plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                }
+                case 2:{
+                    receiptDate = timeHandler.getNextFriday().plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                }
+            }
 
             String contextID = null;
 
@@ -97,7 +116,7 @@ public class PoConverter {
 
                 response = agilityPOLookup(client, contextID, poNum);
 
-                createTrelloPOCard(client, poNum);
+                createTrelloPOCard(client, poNum, receiptDate);
 
                 if (response.has("dtPurchaseOrderDetail") && response != null) {
                     JSONArray json = response.getJSONArray("dtPurchaseOrderDetail");
@@ -266,7 +285,7 @@ public class PoConverter {
                 FileInputStream file = new FileInputStream(templateExcelFile);
                 XSSFWorkbook workbookinput = new XSSFWorkbook(file);
 
-                createTrelloPOCard(client, poNum);
+                createTrelloPOCard(client,poNum, receiptDate);
 
 
                 //output new excel file to which we need to copy the above sheets
@@ -567,9 +586,9 @@ public class PoConverter {
         client.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
-    public static void createTrelloPOCard(HttpClient client, String poNum) {
+    public static void createTrelloPOCard(HttpClient client, String poNum, String receiptDate) {
 
-        String queryParameters = agilityDataForTrelloGather(poNum);
+        String queryParameters = agilityDataForTrelloGather(poNum, receiptDate);
 
         System.out.println("\n-- Created Card --");
         TrelloCalls trelloAPICall = new TrelloCalls(client, "cards", queryParameters);
@@ -579,7 +598,7 @@ public class PoConverter {
         updateCustomFieldTrello(client, response.getString("id"), "6197b500bbb79658801189ce", "ENTER RECEIPT DATE");
     }
 
-    public static String agilityDataForTrelloGather(String poNum){
+    public static String agilityDataForTrelloGather(String poNum, String receiptDate){
 
         String boardID = "60c26dfb44555566d32ae643";
         String idList = "6259bb7ee9fc5f8d3659ca5e";
@@ -594,12 +613,18 @@ public class PoConverter {
 //        String queryParameters = String.format(
 //                "idBoard=%s&idList=%s&name=%s" +
 //                        "&idLabels=%s&start=%s&due=%s",
-//                boardID, idList, name, idLabels, orderDate, dueDate);
+//                boardID, idList, name, idLabels, orderDate, receiptDate);
 
         String queryParameters = String.format(
                 "idBoard=%s&idList=%s&name=%s" +
-                        "&start=%s",
-                boardID, idList, name, orderDate);
+                        "&start=%s&due=%s",
+                boardID, idList, name, orderDate, receiptDate);
+
+//        String queryParameters = String.format(
+//                "idBoard=%s&idList=%s&name=%s" +
+//                        "&start=%s",
+//                boardID, idList, name, orderDate);
+
         return queryParameters;
     }
 
