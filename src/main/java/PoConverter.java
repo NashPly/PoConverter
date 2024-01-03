@@ -59,7 +59,7 @@ public class PoConverter {
             System.out.println("1 - Sid Medlock");
             System.out.println("2 - Tucker Beals");
             System.out.println("3 - Noah Gilmer");
-            System.out.println("4 - Lindsae Faulkner");
+            System.out.println("4 - Luke Medlock");
             userNum = userScanner.nextInt();
 
             switch (userNum) {
@@ -76,8 +76,8 @@ public class PoConverter {
                     userPhone = "(423)582-0803";
                 }
                 case 4 -> {
-                    userName = "Lindsae Faulkner";
-                    userPhone = "(615)433-3332";
+                    userName = "Luke Medlock";
+                    userPhone = "(615)805-3331";
                 }
             }
 
@@ -514,7 +514,7 @@ public class PoConverter {
     public static String login(HttpClient client) throws IOException, InterruptedException {
         JSONObject innerRequestBody = new JSONObject();
         innerRequestBody.put("LoginID","tbeals");
-        innerRequestBody.put("Password","123");
+        innerRequestBody.put("Password","5668");
 
         JSONObject requestBody = new JSONObject();
         requestBody.put("request", innerRequestBody);
