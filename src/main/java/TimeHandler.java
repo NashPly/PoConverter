@@ -1,37 +1,50 @@
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 
 public class TimeHandler {
 
-    private int searchSplit = 5; //Mins
-
-    private String currentYear;
-    private String currentMonth;
-    private String currentDayOfMonth;
-
+    private Integer currentYear;
+    private Integer currentMonth;
+    private Integer currentDayOfMonth;
+    private LocalDate today;
+    private LocalDate nextTuesday;
+    private LocalDate nextFriday;
 
     public TimeHandler(){
 
-        LocalDate localDate = LocalDate.now();
+        this.today = LocalDate.now();
         DateTimeFormatter myFormatCurrentYear = DateTimeFormatter.ofPattern("yyyy");
         DateTimeFormatter myFormatCurrentDayOfMonth = DateTimeFormatter.ofPattern("dd");
         DateTimeFormatter myFormatCurrentMonth = DateTimeFormatter.ofPattern("MM");
 
-        this.currentYear = localDate.format(myFormatCurrentYear);
-        this.currentMonth = localDate.format(myFormatCurrentMonth);
-        this.currentDayOfMonth = localDate.format(myFormatCurrentDayOfMonth);
+        this.currentYear = Integer.valueOf(this.today.format(myFormatCurrentYear));
+        this.currentMonth = Integer.valueOf(this.today.format(myFormatCurrentMonth));
+        this.currentDayOfMonth = Integer.valueOf(this.today.format(myFormatCurrentDayOfMonth));
+
+        this.nextTuesday = setNextDay(DayOfWeek.TUESDAY);
+        this.nextFriday = setNextDay(DayOfWeek.FRIDAY);
     }
 
-    public String getCurrentYear() {
+    public Integer getCurrentYear() {
         return currentYear;
     }
 
-    public String getCurrentMonth() {
+    public Integer getCurrentMonth() {
         return currentMonth;
     }
 
-    public String getCurrentDayOfMonth() {
+    public Integer getCurrentDayOfMonth() {
         return currentDayOfMonth;
+    }
+
+    public LocalDate getNextTuesday() {
+        return nextTuesday;
+    }
+
+    public LocalDate getNextFriday() {
+        return nextFriday;
     }
 
     public String getTodayTrello() {
@@ -55,7 +68,40 @@ public class TimeHandler {
             return "0" + unit;
         else
             return "" + unit;
-
     }
+
+    private LocalDate setNextDay(DayOfWeek day){
+
+        LocalDate nextDay;
+        int leadDays = 4;
+
+        nextDay = this.today.with(TemporalAdjusters.next(day));
+
+        DateTimeFormatter nextDayDay = DateTimeFormatter.ofPattern("dd");
+
+        DateTimeFormatter nextDayMonth = DateTimeFormatter.ofPattern("MM");
+
+        if(Integer.valueOf(nextDay.format(nextDayMonth))==this.currentMonth){
+
+            switch(day){
+                case TUESDAY:{
+                    leadDays = 5;
+                }
+                case FRIDAY:{
+                    leadDays = 3;
+                }
+            }
+            if(Integer.valueOf(nextDay.format(nextDayDay))< this.currentDayOfMonth + leadDays){
+                nextDay = LocalDate.of(this.currentYear,this.currentMonth, this.currentDayOfMonth + leadDays);
+                nextDay = nextDay.with(TemporalAdjusters.next(day));
+            }
+        }
+
+        DateTimeFormatter formatShortDate = DateTimeFormatter.ofPattern("MM/dd");
+
+        return nextDay;
+    }
+
+
 
 }
