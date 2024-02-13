@@ -55,8 +55,8 @@ public class PoConverter {
             System.out.println("Enter user number:");
             System.out.println("1 - Sid Medlock");
             System.out.println("2 - Tucker Beals");
-            System.out.println("3 - Noah Gilmer");
-            System.out.println("4 - Lindsae Faulkner");
+//            System.out.println("3 - Noah Gilmer");
+            System.out.println("4 - Luke Medlock");
             userNum = userScanner.nextInt();
 
             switch (userNum) {
@@ -68,13 +68,13 @@ public class PoConverter {
                     userName = "Tucker Beals";
                     userPhone = "(615)681-3501";
                 }
+//                case 3 -> {
+//                    userName = "Noah Gilmer";
+//                    userPhone = "(423)582-0803";
+//                }
                 case 3 -> {
-                    userName = "Noah Gilmer";
-                    userPhone = "(423)582-0803";
-                }
-                case 4 -> {
-                    userName = "Lindsae Faulkner";
-                    userPhone = "(615)433-3332";
+                    userName = "Luke Medlock";
+                    userPhone = "(615)521-3361";
                 }
             }
 
