@@ -48,7 +48,7 @@ public class TimeHandler {
     }
 
     public String getTodayTrello() {
-        return trelloDateAdjuster(this.currentYear + "-" + this.currentMonth + "-" + this.currentDayOfMonth);
+        return trelloDateAdjuster(this.currentYear + "-" + addZeroIfLessThanTen(this.currentMonth) + "-" + addZeroIfLessThanTen(this.currentDayOfMonth));
     }
 
     private String trelloDateAdjuster(String date){

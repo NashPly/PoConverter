@@ -49,8 +49,6 @@ public class APICaller {
                 response = null;
             }
 
-
-
             if(response != null){
                 System.out.println(response);
                 System.out.println(response.body());

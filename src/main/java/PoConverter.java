@@ -273,7 +273,7 @@ public class PoConverter {
                     if( args.length == 1){
                         out = new FileOutputStream("..\\..\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
                     }else{
-                        out = new FileOutputStream("C:\\Users\\tbeals\\Nashville Plywood\\Nashville Plywood Top Shop - Documents\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
+                        out = new FileOutputStream("C:\\Users\\Tucker Beals\\Nashville Plywood\\Nashville Plywood Top Shop - Documents\\Cullman PO Spreadsheets\\Cullman_NashPly_PO" + poNum + ".xlsx");
                     }
                     workbookoutput.write(out);
                     out.close();
@@ -613,6 +613,7 @@ public class PoConverter {
 
         TimeHandler timeHandler = new TimeHandler();
         String orderDate = timeHandler.getTodayTrello();
+        receiptDate = timeHandler.getTodayTrello();
 
         System.out.println("\n-- Created PO Card --");
 
