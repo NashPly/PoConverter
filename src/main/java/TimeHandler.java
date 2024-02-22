@@ -5,14 +5,14 @@ import java.time.temporal.TemporalAdjusters;
 
 public class TimeHandler {
 
-    private Integer currentYear;
-    private Integer currentMonth;
-    private Integer currentDayOfMonth;
-    private LocalDate today;
-    private LocalDate nextTuesday;
-    private LocalDate nextFriday;
+    private final Integer currentYear;
+    private final Integer currentMonth;
+    private final Integer currentDayOfMonth;
+    private final LocalDate today;
+    private final LocalDate nextTuesday;
+    private final LocalDate nextFriday;
 
-    public TimeHandler(){
+    public TimeHandler() {
 
         this.today = LocalDate.now();
         DateTimeFormatter myFormatCurrentYear = DateTimeFormatter.ofPattern("yyyy");
@@ -52,25 +52,18 @@ public class TimeHandler {
     }
 
     private String trelloDateAdjuster(String date){
-        int dateHold = Integer.parseInt(date.substring(8, 10));
-
-        if(dateHold+1>31) {
-            return date.substring(0, 8) + (Integer.valueOf(date.substring(8, 10)));
-        }else{
-            dateHold++;
-            return date.substring(0, 8) + dateHold;
-        }
+        return date+"T12:00:00.00-06:00";
     }
 
-    private String addZeroIfLessThanTen(int unit){
+    private String addZeroIfLessThanTen(int unit) {
 
-        if(unit<10)
+        if (unit < 10)
             return "0" + unit;
         else
             return "" + unit;
     }
 
-    private LocalDate setNextDay(DayOfWeek day){
+    private LocalDate setNextDay(DayOfWeek day) {
 
         LocalDate nextDay;
         int leadDays = 4;
@@ -81,18 +74,18 @@ public class TimeHandler {
 
         DateTimeFormatter nextDayMonth = DateTimeFormatter.ofPattern("MM");
 
-        if(Integer.valueOf(nextDay.format(nextDayMonth))==this.currentMonth){
+        if (Integer.valueOf(nextDay.format(nextDayMonth)).equals(this.currentMonth)) {
 
-            switch(day){
-                case TUESDAY:{
+            switch (day) {
+                case TUESDAY: {
                     leadDays = 5;
                 }
-                case FRIDAY:{
+                case FRIDAY: {
                     leadDays = 3;
                 }
             }
-            if(Integer.valueOf(nextDay.format(nextDayDay))< this.currentDayOfMonth + leadDays){
-                nextDay = LocalDate.of(this.currentYear,this.currentMonth, this.currentDayOfMonth + leadDays);
+            if (Integer.valueOf(nextDay.format(nextDayDay)) < this.currentDayOfMonth + leadDays) {
+                nextDay = LocalDate.of(this.currentYear, this.currentMonth, this.currentDayOfMonth + leadDays);
                 nextDay = nextDay.with(TemporalAdjusters.next(day));
             }
         }
@@ -101,7 +94,4 @@ public class TimeHandler {
 
         return nextDay;
     }
-
-
-
 }
