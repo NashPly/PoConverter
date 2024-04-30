@@ -96,7 +96,7 @@ public class PoConverter {
             switch(deliveryDate){
                 case 1:{
                     receiptDate = timeHandler.getNextTuesday().plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                    orderDestination = "Portland";
+                    orderDestination = "Gallatin";
                     break;
                 }
                 case 2:{
