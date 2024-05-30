@@ -84,8 +84,8 @@ public class TimeHandler {
                     leadDays = 3;
                 }
             }
-            if (Integer.valueOf(nextDay.format(nextDayDay)) < this.currentDayOfMonth + leadDays) {
-                nextDay = LocalDate.of(this.currentYear, this.currentMonth, this.currentDayOfMonth + leadDays);
+            if (Integer.valueOf(nextDay.format(nextDayDay)) < (this.currentDayOfMonth + leadDays)) {
+                //nextDay = LocalDate.of(this.currentYear, this.currentMonth, this.currentDayOfMonth + leadDays);
                 nextDay = nextDay.with(TemporalAdjusters.next(day));
             }
         }
