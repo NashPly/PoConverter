@@ -196,9 +196,9 @@ public class PoConverter {
                     if(((lineItem.equals("LSPL") || lineItem.equals("BCAP") ) || lineItem.equals("SCAP")) && !size.equals("")) {
                         int length = Integer.parseInt(size.replaceAll(" ", "").replaceAll("\"", "").split("X")[1]) / 12;
                         System.out.println(length);
-                        if(item.getInt("Quantity")>=length) {
+                        if(item.getInt("Quantity")>=length && item.getString("QuantityUOM").equals("LF")) {
                             excelAccessoryList = plugInLineItemToSpreadsheetRows(excelAccessoryList, destination, colorCode, item.getInt("Quantity") / length);
-                        }else {
+                        }else if(item.getString("QuantityUOM").equals("EA") || item.getString("QuantityUOM").equals("PC")) {
                             excelAccessoryList = plugInLineItemToSpreadsheetRows(excelAccessoryList, destination, colorCode, item.getInt("Quantity"));
                         }
                     } else{
@@ -293,7 +293,6 @@ public class PoConverter {
                 XSSFWorkbook workbookinput = new XSSFWorkbook(file);
 
                 createTrelloPOCard(client,poNum, receiptDate);
-
 
                 //output new excel file to which we need to copy the above sheets
                 //this would copy entire workbook from source
@@ -477,6 +476,19 @@ public class PoConverter {
             }
             case "BCAP", "SCAP" -> {
                 baseDestination = 9;
+                switch(size.split("X")[1].replaceAll("\"","")){
+                    case "96" ->{
+                    }
+                    case "120" ->{
+                        baseDestination += 1;
+                    }
+                    case "144" ->{
+                        baseDestination += 2;
+                    }
+                    default -> {
+
+                    }
+                }
             }
             case "LSPL" -> {
                 baseDestination = 12;
@@ -488,6 +500,9 @@ public class PoConverter {
                     }
                     case "144" ->{
                         baseDestination += 2;
+                    }
+                    default -> {
+
                     }
                 }
             }
@@ -501,6 +516,9 @@ public class PoConverter {
                     }
                     case "144" ->{
                         baseDestination += 2;
+                    }
+                    default -> {
+
                     }
                 }
             }
