@@ -61,6 +61,7 @@ public class PoConverter {
 //            System.out.println("3 - Noah Gilmer");
 
             System.out.println("3 - Luke Medlock");
+            System.out.println("4 - James Richards");
             userNum = userScanner.nextInt();
 
             switch (userNum) {
