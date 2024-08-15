@@ -80,6 +80,10 @@ public class PoConverter {
                     userName = "Luke Medlock";
                     userPhone = "(615)521-3361";
                 }
+                case 4 -> {
+                    userName = "James Richards";
+                    userPhone = "(615)330-4454";
+                }
             }
 
             System.out.println("\nEnter Agility PO Number you wish to convert:");
